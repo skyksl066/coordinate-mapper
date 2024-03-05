@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>Coordinate Mapper</title>
+    <style>
+        #map {
+            height: calc(100vh - 56px);
+        }
+    </style>
+</head>
+<body class="container-fluid">
+    <header>
+        <nav class="navbar navbar-expand-lg sticky-top">
+            <div class="container">
+                <a class="navbar-brand" href="#">Coordinate Mapper</a>
+            </div>
+        </nav>
+    </header>
+    <div class="row">
+        <div class="col-8 col-xl-10">
+            <div id="map"></div>
+        </div>
+        <div class="col-4 col-xl-2">
+            <div class="row">
+                <div class="form-group">
+                    <label for="fileInput" class="form-label">
+                        Upload File
+                    </label>
+                    <input class="form-control" type="file" id="fileInput" accept="text/csv">
+                    <small class="form-text">
+                        <a href="sample.csv" download>Sample.csv</a>
+                    </small>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <label for="fileInput" class="form-label">Coordinate List</label>
+                    <select class="form-select" size="20" multiple aria-label="multiple select" autocomplete="off" id="coordinate"></select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="lineColorPicker" class="form-label">Line Color picker</label>
+                        <input type="color" class="form-control form-control-color w-100" id="lineColorPicker" value="#3388ff" title="Choose your color">
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group">
+                        <label for="lineWeight" class="form-label">Line Weight</label>
+                        <input type="number" class="form-control" id="lineWeight" value="3">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <button type="button" class="btn btn-primary" id="btnDraw">Draw</button>
+                    <button type="button" class="btn btn-danger" id="btnClean">Clean</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([24.43784990051226, 118.31827760890636], 13);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        document.getElementById('fileInput').addEventListener('change', function (e) {
+            var file = e.target.files[0];
+            if (!file) {
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var contents = e.target.result;
+                var rows = contents.split('\n');
+                var data = rows.reduce(function (result, row) {
+                    if (row.trim() !== '') {
+                        result.push(row.replace(/\r$/, '').split(','));
+                    }
+                    return result;
+                }, []);
+                displayContents(data);
+            };
+            reader.readAsText(file, 'UTF-8');
+        });
+
+        document.getElementById('btnClean').addEventListener('click', function (e) {
+            map.eachLayer(function (layer) {
+                if (layer !== map && !(layer instanceof L.TileLayer)) {
+                    map.removeLayer(layer);
+                }
+            });
+        });
+
+        document.getElementById('btnDraw').addEventListener('click', function (e) {
+            var select = document.getElementById('coordinate');
+            var selectedOptions = select.selectedOptions;
+            var coordinates = [];
+            var totalLatitude = 0;
+            var totalLongitude = 0;
+            var count = 0;
+            for (var i = 0; i < selectedOptions.length; i++) {
+                var selectedOption = selectedOptions[i];
+                var selectedTime = selectedOption.text;
+                var selectedLatitude = parseFloat(selectedOption.getAttribute('data-latitude'));
+                var selectedLongitude = parseFloat(selectedOption.getAttribute('data-longitude'));
+                totalLatitude += selectedLatitude;
+                totalLongitude += selectedLongitude;
+                count++;
+                coordinates.push([selectedLatitude, selectedLongitude]);
+            }
+            if (count > 0) {
+                var centerLatitude = totalLatitude / count;
+                var centerLongitude = totalLongitude / count;
+                map.panTo([centerLatitude, centerLongitude]);
+            }
+            var lineColor = document.getElementById('lineColorPicker').value;
+            var lineWeight = document.getElementById('lineWeight').value;
+            L.polyline(coordinates, { color: lineColor, weight: lineWeight }).addTo(map);
+            //coordinates.forEach(function (location, index) {
+            //    L.marker(location).addTo(map);
+            //    //L.marker(location, {
+            //    //    icon: L.divIcon({
+            //    //        className: 'custom-marker',
+            //    //        html: '<div class="marker-label">' + (index + 1) + '</div>',
+            //    //        iconSize: [30, 30]
+            //    //    })
+            //    //}).addTo(map);
+            //});
+        });
+
+        function displayContents(data) {
+            var select = document.getElementById('coordinate');
+            data.forEach(function (row) {
+                var option = document.createElement('option');
+                option.text = row[0];
+                option.setAttribute('data-latitude', row[1]);
+                option.setAttribute('data-longitude', row[2]);
+                select.add(option);
+            });
+        }
+    </script>
+</body>
+</html>
+
