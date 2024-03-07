@@ -9,6 +9,34 @@
     <style>
         #map {
             height: calc(100vh - 56px);
+            cursor: auto;
+        }
+
+        .form-check-input {
+            width: 5em !important;
+            height: 2em;
+        }
+
+        #coordinate {
+            height: calc(100vh - 310px);
+        }
+
+        .custom-marker {
+            color: black;
+        }
+
+        @media (max-width: 575.98px) {
+            #map {
+                height: calc(50vh - 56px);
+            }
+
+            .form-label {
+                margin-bottom: 0;
+            }
+
+            #coordinate {
+                height: calc(50vh - 220px);
+            }
         }
     </style>
 </head>
@@ -17,14 +45,24 @@
         <nav class="navbar navbar-expand-lg sticky-top">
             <div class="container">
                 <a class="navbar-brand" href="#">Coordinate Mapper</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" data-bs-toggle="modal" data-bs-target="#settingModal">Settings</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </nav>
     </header>
     <div class="row">
-        <div class="col-8 col-xl-10">
+        <div class="col-12 col-sm-8 col-xl-10">
             <div id="map"></div>
         </div>
-        <div class="col-4 col-xl-2">
+        <div class="col-12 col-sm-4 col-xl-2">
             <div class="row">
                 <div class="form-group">
                     <label for="fileInput" class="form-label">
@@ -37,119 +75,451 @@
                 </div>
             </div>
             <div class="row">
+                <div class="col-6">
+                    <div class="form-group">
+                        <label class="form-label" for="measuringSwitch">Measuring</label>
+                        <div class="form-switch">
+                            <input class="form-check-input" type="checkbox" id="measuringSwitch">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-group">
+                        <label class="form-label" for="autoDraw">Auto draw</label>
+                        <div class="form-switch">
+                            <input class="form-check-input" type="checkbox" id="autoDrawSwitch">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
                 <div class="form-group">
                     <label for="fileInput" class="form-label">Coordinate List</label>
-                    <select class="form-select" size="20" multiple aria-label="multiple select" autocomplete="off" id="coordinate"></select>
+                    <select class="form-select" multiple aria-label="multiple select" id="coordinate"></select>
                 </div>
             </div>
+
             <div class="row">
                 <div class="col-6">
-                    <div class="form-group">
-                        <label for="lineColorPicker" class="form-label">Line Color picker</label>
-                        <input type="color" class="form-control form-control-color w-100" id="lineColorPicker" value="#3388ff" title="Choose your color">
-                    </div>
+                    <button type="button" class="btn btn-primary w-100 rounded-pill" id="btnDraw">Draw</button>
                 </div>
                 <div class="col-6">
-                    <div class="form-group">
-                        <label for="lineWeight" class="form-label">Line Weight</label>
-                        <input type="number" class="form-control" id="lineWeight" value="3">
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-12">
-                    <button type="button" class="btn btn-primary" id="btnDraw">Draw</button>
-                    <button type="button" class="btn btn-danger" id="btnClean">Clean</button>
+                    <button type="button" class="btn btn-danger w-100 rounded-pill" id="btnClean">Clean</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <form id="setting_form">
+        <div class="modal fade" id="settingModal" tabindex="-1" aria-labelledby="settingModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="settingModalLabel">Settings</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="lineColorPicker" class="form-label">Line color picker</label>
+                                    <input type="color" class="form-control form-control-color w-100" id="lineColorPicker" value="#3388ff" title="Choose your color">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="lineWeight" class="form-label">Line weight</label>
+                                    <input type="number" class="form-control" id="lineWeight" value="3">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="drawMarker">Draw marker</label>
+                                    <div class="form-switch">
+                                        <input class="form-check-input" type="checkbox" id="drawMarker" checked style="width: 5em; height:2em;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="markerFontSize" class="form-label">Marker font size</label>
+                                    <input type="number" class="form-control" id="markerFontSize" value="18">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label" for="periodOne">Period one</label>
+                                    <div class="input-group">
+                                        <input class="form-control" type="time" id="periodOneStart" value="07:00">
+                                        <span class="input-group-text">~</span>
+                                        <input class="form-control" type="time" id="periodOneEnd" value="17:59">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label" for="periodTwo">Period two</label>
+                                    <div class="input-group">
+                                        <input class="form-control" type="time" id="periodTwoStart" value="18:00">
+                                        <span class="input-group-text">~</span>
+                                        <input class="form-control" type="time" id="periodTwoEnd" value="21:59">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label" for="periodThree">Period three</label>
+                                    <div class="input-group">
+                                        <input class="form-control" type="time" id="periodThreeStart" value="22:00">
+                                        <span class="input-group-text">~</span>
+                                        <input class="form-control" type="time" id="periodThreeEnd" value="06:59">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        var map = L.map('map').setView([24.43784990051226, 118.31827760890636], 13);
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }).addTo(map);
+        (() => {
+            'use strict'
 
-        document.getElementById('fileInput').addEventListener('change', function (e) {
-            var file = e.target.files[0];
-            if (!file) {
-                return;
+            // 取得儲存在 localStorage 中的主題設定
+            const getStoredTheme = () => localStorage.getItem('theme');
+            // 設定儲存在 localStorage 中的主題設定
+            const setStoredTheme = theme => localStorage.setItem('theme', theme);
+
+            // 取得偏好的主題設定，若無儲存在 localStorage 中的設定，則根據系統設定返回深色或淺色主題
+            const getPreferredTheme = () => {
+                const storedTheme = getStoredTheme()
+                if (storedTheme) {
+                    return storedTheme
+                }
+
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
             }
-            var reader = new FileReader();
-            reader.onload = function (e) {
-                var contents = e.target.result;
-                var rows = contents.split('\n');
-                var data = rows.reduce(function (result, row) {
-                    if (row.trim() !== '') {
-                        result.push(row.replace(/\r$/, '').split(','));
-                    }
-                    return result;
-                }, []);
-                displayContents(data);
-            };
-            reader.readAsText(file, 'UTF-8');
-        });
 
-        document.getElementById('btnClean').addEventListener('click', function (e) {
-            map.eachLayer(function (layer) {
-                if (layer !== map && !(layer instanceof L.TileLayer)) {
-                    map.removeLayer(layer);
+            // 設定主題，根據 'auto' 或指定的主題設定
+            const setTheme = theme => {
+                if (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.setAttribute('data-bs-theme', 'dark')
+                } else {
+                    document.documentElement.setAttribute('data-bs-theme', theme)
+                }
+            }
+
+            // 初始化主題
+            setTheme(getPreferredTheme());
+
+            // 顯示目前選取的主題
+            const showActiveTheme = (theme, focus = false) => {
+                const themeSwitcher = document.querySelector('#bd-theme')
+
+                if (!themeSwitcher) {
+                    return
+                }
+
+                const themeSwitcherText = document.querySelector('#bd-theme-text')
+                const activeThemeIcon = document.querySelector('.theme-icon-active use')
+                const btnToActive = document.querySelector(`[data-bs-theme-value="${theme}"]`)
+                const svgOfActiveBtn = btnToActive.querySelector('svg use').getAttribute('href')
+
+                document.querySelectorAll('[data-bs-theme-value]').forEach(element => {
+                    element.classList.remove('active')
+                    element.setAttribute('aria-pressed', 'false')
+                })
+
+                btnToActive.classList.add('active')
+                btnToActive.setAttribute('aria-pressed', 'true')
+                activeThemeIcon.setAttribute('href', svgOfActiveBtn)
+                const themeSwitcherLabel = `${themeSwitcherText.textContent} (${btnToActive.dataset.bsThemeValue})`
+                themeSwitcher.setAttribute('aria-label', themeSwitcherLabel)
+
+                if (focus) {
+                    themeSwitcher.focus()
+                }
+            }
+
+            // 監聽系統主題變更事件，若無指定主題，則根據系統設定更新主題
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                const storedTheme = getStoredTheme()
+                if (storedTheme !== 'light' && storedTheme !== 'dark') {
+                    setTheme(getPreferredTheme())
                 }
             });
-        });
 
-        document.getElementById('btnDraw').addEventListener('click', function (e) {
-            var select = document.getElementById('coordinate');
-            var selectedOptions = select.selectedOptions;
-            var coordinates = [];
-            var totalLatitude = 0;
-            var totalLongitude = 0;
-            var count = 0;
-            for (var i = 0; i < selectedOptions.length; i++) {
-                var selectedOption = selectedOptions[i];
-                var selectedTime = selectedOption.text;
-                var selectedLatitude = parseFloat(selectedOption.getAttribute('data-latitude'));
-                var selectedLongitude = parseFloat(selectedOption.getAttribute('data-longitude'));
-                totalLatitude += selectedLatitude;
-                totalLongitude += selectedLongitude;
-                count++;
-                coordinates.push([selectedLatitude, selectedLongitude]);
-            }
-            if (count > 0) {
-                var centerLatitude = totalLatitude / count;
-                var centerLongitude = totalLongitude / count;
-                map.panTo([centerLatitude, centerLongitude]);
-            }
-            var lineColor = document.getElementById('lineColorPicker').value;
-            var lineWeight = document.getElementById('lineWeight').value;
-            L.polyline(coordinates, { color: lineColor, weight: lineWeight }).addTo(map);
-            //coordinates.forEach(function (location, index) {
-            //    L.marker(location).addTo(map);
-            //    //L.marker(location, {
-            //    //    icon: L.divIcon({
-            //    //        className: 'custom-marker',
-            //    //        html: '<div class="marker-label">' + (index + 1) + '</div>',
-            //    //        iconSize: [30, 30]
-            //    //    })
-            //    //}).addTo(map);
-            //});
-        });
+            // 初始化主題顯示
+            window.addEventListener('DOMContentLoaded', () => {
+                showActiveTheme(getPreferredTheme())
 
-        function displayContents(data) {
-            var select = document.getElementById('coordinate');
-            data.forEach(function (row) {
-                var option = document.createElement('option');
-                option.text = row[0];
-                option.setAttribute('data-latitude', row[1]);
-                option.setAttribute('data-longitude', row[2]);
-                select.add(option);
+                // 監聽主題切換按鈕事件
+                document.querySelectorAll('[data-bs-theme-value]')
+                    .forEach(toggle => {
+                        toggle.addEventListener('click', () => {
+                            const theme = toggle.getAttribute('data-bs-theme-value')
+                            setStoredTheme(theme)
+                            setTheme(theme)
+                            showActiveTheme(theme, true)
+                        })
+                    })
             });
-        }
+
+            // 若無儲存在 localStorage 中的設定，則初始化預設設定
+            var setting = localStorage.getItem('setting');
+            if (setting) {
+                setting = JSON.parse(setting);
+            } else {
+                setting = {
+                    lineColor: '#3388ff',
+                    lineWeight: '3',
+                    markerFontSize: '18',
+                    drawMarker: true,
+                    periods: {
+                        periodOne: { start: '07:00', end: '17:59' },
+                        periodTwo: { start: '18:00', end: '21:59' },
+                        periodThree: { start: '22:00', end: '06:59' },
+                    },
+                    center: [24.43784990051226, 118.31827760890636],
+                    zoom: 13
+                };
+                localStorage.setItem('setting', JSON.stringify(setting));
+            }
+
+            // 初始化設定 Modal
+            var settingModal = new bootstrap.Modal(document.getElementById('settingModal'), {});
+            var lineColor = document.getElementById('lineColorPicker');
+            var lineWeight = document.getElementById('lineWeight');
+            var markerFontSize = document.getElementById('markerFontSize');
+            var drawMarker = document.getElementById('drawMarker');
+            var periodOneStart = document.getElementById('periodOneStart');
+            var periodOneEnd = document.getElementById('periodOneEnd');
+            var periodTwoStart = document.getElementById('periodTwoStart');
+            var periodTwoEnd = document.getElementById('periodTwoEnd');
+            var periodThreeStart = document.getElementById('periodThreeStart');
+            var periodThreeEnd = document.getElementById('periodThreeEnd');
+            var measuringCoordinates = [];
+            var map = L.map('map').setView(setting.center, setting.zoom); // 創建地圖並設置中心點和縮放級別
+
+            // 監聽地圖移動事件，更新中心點和縮放級別至 localStorage
+            map.on('moveend', () => {
+                var center = map.getCenter(); // 獲取地圖中心經緯度
+                setting.center = [center.lat, center.lng];
+                var zoomLevel = map.getZoom(); // 獲取地圖縮放級別
+                setting.zoom = zoomLevel;
+                localStorage.setItem('setting', JSON.stringify(setting));
+            });
+
+            // 添加地圖圖層
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+
+            // 初始化設定 Modal
+            document.getElementById('settingModal').addEventListener('show.bs.modal', () => {
+                lineColor.value = setting.lineColor;
+                lineWeight.value = setting.lineWeight;
+                markerFontSize.value = setting.markerFontSize;
+                drawMarker.checked = setting.drawMarker;
+                periodOneStart.value = setting.periods.periodOne.start;
+                periodOneEnd.value = setting.periods.periodOne.end;
+                periodTwoStart.value = setting.periods.periodTwo.start;
+                periodTwoEnd.value = setting.periods.periodTwo.end;
+                periodThreeStart.value = setting.periods.periodThree.start;
+                periodThreeEnd.value = setting.periods.periodThree.end;
+            });
+
+            // 監聽設定表單提交事件，更新設定至 localStorage
+            document.getElementById('setting_form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                setting = {
+                    ...setting,
+                    lineColor: lineColor.value,
+                    lineWeight: lineWeight.value,
+                    markerFontSize: markerFontSize.value,
+                    drawMarker: drawMarker.checked,
+                    periods: {
+                        periodOne: { start: periodOneStart.value, end: periodOneEnd.value },
+                        periodTwo: { start: periodTwoStart.value, end: periodTwoEnd.value },
+                        periodThree: { start: periodThreeStart.value, end: periodThreeEnd.value },
+                    },
+                };
+                localStorage.setItem('setting', JSON.stringify(setting));
+                settingModal.hide();
+            });
+
+            // 監聽檔案上傳事件，讀取檔案內容並顯示在地圖上
+            document.getElementById('fileInput').addEventListener('change', (e) => {
+                var file = e.target.files[0];
+                if (!file) {
+                    return;
+                }
+                var reader = new FileReader();
+                reader.onload = (e) => {
+                    var contents = e.target.result;
+                    var rows = contents.split('\n');
+                    var data = rows.reduce((result, row) => {
+                        if (row.trim() !== '') {
+                            result.push(row.replace(/\r$/, '').split(','));
+                        }
+                        return result;
+                    }, []);
+                    displayContents(data);
+                };
+                reader.readAsText(file, 'UTF-8');
+            });
+
+            // 監聽清除按鈕點擊事件，清除地圖上的圖層和測量坐標
+            document.getElementById('btnClean').addEventListener('click', () => {
+                map.eachLayer((layer) => {
+                    if (layer !== map && !(layer instanceof L.TileLayer)) {
+                        map.removeLayer(layer);
+                    }
+                });
+                measuringCoordinates = [];
+            });
+
+            // 監聽繪製按鈕點擊事件，根據選取的坐標繪製折線
+            document.getElementById('btnDraw').addEventListener('click', () => {
+                var select = document.getElementById('coordinate');
+                var selectedOptions = select.selectedOptions;
+                polylineDraw(selectedOptions);
+            });
+
+            // 監聽測量開關切換事件，開啟或關閉測量模式
+            document.getElementById('measuringSwitch').addEventListener('change', function (event) {
+                if (this.checked) {
+                    map.on('click', mapClickHandler);
+                    measuringCoordinates = [];
+                } else {
+                    map.off('click', mapClickHandler);
+                }
+            });
+
+            // 監聽自動繪製開關切換事件，開啟或關閉自動繪製功能
+            document.getElementById('autoDrawSwitch').addEventListener('change', function (event) {
+                if (this.checked) {
+                    document.getElementById('coordinate').addEventListener('change', coordinateChangeHandler);
+                } else {
+                    document.getElementById('coordinate').removeEventListener('change', coordinateChangeHandler);
+                }
+            });
+
+            // 顯示坐標內容
+            const displayContents = (data) => {
+                var select = document.getElementById('coordinate');
+                var optgroups = {};
+                var periods = setting.periods;
+
+                data.forEach((row, index) => {
+                    var timestamp = row[0];
+                    var latitude = row[1];
+                    var longitude = row[2];
+                    var time = new Date(timestamp).toLocaleTimeString('en-US', { hour12: false });
+
+                    var period = Object.keys(periods).find((key) => {
+                        var start = new Date('1970-01-01T' + periods[key].start);
+                        var end = new Date('1970-01-01T' + periods[key].end);
+                        var timestampDate = new Date('1970-01-01T' + time);
+                        return timestampDate >= start && timestampDate <= end;
+                    });
+
+                    if (!optgroups[period]) {
+                        optgroups[period] = document.createElement('optgroup');
+                        optgroups[period].label = period;
+                        select.add(optgroups[period]);
+                    }
+
+                    var option = document.createElement('option');
+                    option.text = `${index + 1}. ${timestamp}`;
+                    option.value = index + 1;
+                    option.setAttribute('data-latitude', latitude);
+                    option.setAttribute('data-longitude', longitude);
+                    optgroups[period].appendChild(option);
+                });
+            }
+
+            // 地圖點擊事件處理器，繪製測量線和標記
+            const mapClickHandler = (e) => {
+                var lat = e.latlng.lat;
+                var lng = e.latlng.lng;
+                measuringCoordinates.push([lat, lng]);
+                if (measuringCoordinates.length > 1) {
+                    L.polyline(measuringCoordinates, { color: 'black', weight: setting.lineWeight, dashArray: '50, 20' }).addTo(map);
+                    for (var i = 1; i < measuringCoordinates.length; i++) {
+                        var point1 = L.latLng(measuringCoordinates[i - 1][0], measuringCoordinates[i - 1][1]);
+                        var point2 = L.latLng(measuringCoordinates[i][0], measuringCoordinates[i][1]);
+                        var distance = point1.distanceTo(point2); // 單位為米
+                        var distanceInKm = distance / 1000; // 單位為公里
+                        var center = L.latLngBounds([point1, point2]).getCenter(); // 計算兩點的中心點
+                        L.marker(center, {
+                            icon: L.divIcon({
+                                className: 'custom-marker',
+                                html: `<div style="font-size: ${setting.markerFontSize}px;white-space: nowrap;">${distanceInKm.toFixed(2)}公里</div>`,
+                            })
+                        }).addTo(map);
+                    }
+                }
+            }
+
+            // 坐標變更事件處理器，根據選取的坐標繪製折線
+            function coordinateChangeHandler(e) {
+                var selectedIndex = this.selectedIndex;
+                var options = this.options;
+                var selectedOptions = [];
+                for (var i = 0; i <= selectedIndex; i++) {
+                    selectedOptions.push(options[i]);
+                }
+                polylineDraw(selectedOptions);
+            }
+
+            // 繪製折線
+            const polylineDraw = (selectedOptions) => {
+                var coordinates = [];
+                var totalLatitude = 0;
+                var totalLongitude = 0;
+                var count = 0;
+                for (var i = 0; i < selectedOptions.length; i++) {
+                    var selectedOption = selectedOptions[i];
+                    var selectedTime = selectedOption.text;
+                    var selectedValue = selectedOption.value;
+                    var selectedLatitude = parseFloat(selectedOption.getAttribute('data-latitude'));
+                    var selectedLongitude = parseFloat(selectedOption.getAttribute('data-longitude'));
+                    totalLatitude += selectedLatitude;
+                    totalLongitude += selectedLongitude;
+                    count++;
+                    coordinates.push([selectedLatitude, selectedLongitude]);
+
+                    if (setting.drawMarker) {
+                        L.marker([selectedLatitude, selectedLongitude], {
+                            icon: L.divIcon({
+                                className: 'custom-marker',
+                                html: `<div style="font-size: ${setting.markerFontSize}px;">${selectedValue}</div>`,
+                            })
+                        }).addTo(map);
+                    }
+                }
+                if (count > 0) {
+                    var centerLatitude = totalLatitude / count;
+                    var centerLongitude = totalLongitude / count;
+                    map.panTo([centerLatitude, centerLongitude]);
+                }
+                L.polyline(coordinates, { color: setting.lineColor, weight: setting.lineWeight }).addTo(map);
+            }
+        })();
     </script>
 </body>
 </html>
-
