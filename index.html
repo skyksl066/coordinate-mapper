@@ -18,7 +18,7 @@
         }
 
         #coordinate {
-            height: calc(100vh - 310px);
+            height: calc(100vh - 340px);
         }
 
         .custom-marker {
@@ -35,7 +35,7 @@
             }
 
             #coordinate {
-                height: calc(50vh - 220px);
+                height: calc(50vh - 250px);
             }
         }
     </style>
@@ -76,6 +76,14 @@
             </div>
             <div class="row">
                 <div class="col-6">
+                    <button type="button" class="btn btn-outline-light btn-sm w-100 rounded-pill" id="btnGroup" disabled>Group</button>
+                </div>
+                <div class="col-6">
+                    <button type="button" class="btn btn-outline-light btn-sm w-100 rounded-pill" id="btnUngroup" disabled>Ungroup</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6">
                     <div class="form-group">
                         <label class="form-label" for="measuringSwitch">Measuring</label>
                         <div class="form-switch">
@@ -100,11 +108,14 @@
             </div>
 
             <div class="row">
-                <div class="col-6">
-                    <button type="button" class="btn btn-primary w-100 rounded-pill" id="btnDraw">Draw</button>
+                <div class="col-4">
+                    <button type="button" class="btn btn-primary btn-sm w-100 rounded-pill" id="btnDraw">Draw</button>
                 </div>
-                <div class="col-6">
-                    <button type="button" class="btn btn-danger w-100 rounded-pill" id="btnClean">Clean</button>
+                <div class="col-4">
+                    <button type="button" class="btn btn-primary btn-sm w-100 rounded-pill" id="btnHeat">Heat</button>
+                </div>
+                <div class="col-4">
+                    <button type="button" class="btn btn-danger btn-sm w-100 rounded-pill" id="btnClean">Clean</button>
                 </div>
             </div>
         </div>
@@ -193,6 +204,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <script>
         (() => {
             'use strict'
@@ -311,7 +323,212 @@
             var periodThreeStart = document.getElementById('periodThreeStart');
             var periodThreeEnd = document.getElementById('periodThreeEnd');
             var measuringCoordinates = [];
+            var fileInputData = [];
             var map = L.map('map').setView(setting.center, setting.zoom); // 創建地圖並設置中心點和縮放級別
+
+            // 顯示坐標內容
+            function displayContents() {
+                var btn = this;
+                var select = document.getElementById('coordinate');
+                select.innerHTML = '';
+                var periods = setting.periods;
+                var prevColor = '';
+
+                fileInputData.forEach((row, index) => {
+                    var timestamp = row[0];
+                    var latitude = row[1];
+                    var longitude = row[2];
+                    var dateTime = new Date(timestamp);
+                    var date = dateTime.toLocaleDateString('zh-TW');
+
+                    var period = Object.keys(periods).find((key) => {
+                        var start = new Date(`${date} ${periods[key].start}`);
+                        var end = new Date(`${date} ${periods[key].end}`);
+                        if (periods[key].start > periods[key].end) {
+                            var d = new Date(timestamp);
+                            var t = d.toLocaleTimeString('en-US', { hour12: false });
+                            if (t <= '23:59' && t > periods[key].start) {
+                                d.setDate(dateTime.getDate() + 1);
+                                var nextDay = d.toLocaleDateString('zh-TW');
+                                end = new Date(`${nextDay} ${periods[key].start}`);
+                            } else {
+                                d.setDate(dateTime.getDate() - 1);
+                                var prevDay = d.toLocaleDateString('zh-TW');
+                                start = new Date(`${prevDay} ${periods[key].start}`);
+                                date = prevDay;
+                            }
+                        }
+                        return dateTime >= start && dateTime <= end;
+                    });
+
+                    var prevLatitude = null;
+                    var prevLongitude = null;
+                    var nextLatitude = null;
+                    var nextLongitude = null;
+
+                    if (index > 0) {
+                        prevLatitude = fileInputData[index - 1][1];
+                        prevLongitude = fileInputData[index - 1][2];
+                    }
+
+                    if (index < fileInputData.length - 1) {
+                        nextLatitude = fileInputData[index + 1][1];
+                        nextLongitude = fileInputData[index + 1][2];
+                    }
+
+                    if (btn.id === 'btnGroup') {
+                        var groupLabel = `${date} - ${period}`;
+                        var optgroup = select.querySelector(`optgroup[label="${groupLabel}"]`);
+                        if (!optgroup) {
+                            optgroup = document.createElement('optgroup');
+                            optgroup.label = groupLabel;
+                            select.appendChild(optgroup);
+                        }
+                        var groupIndex = optgroup.children.length + 1;
+                        var option = document.createElement('option');
+                        option.text = `${groupIndex}. ${timestamp}`;
+                        option.value = groupIndex;
+                        option.setAttribute('data-latitude', latitude);
+                        option.setAttribute('data-longitude', longitude);
+
+                        if (latitude === prevLatitude && longitude === prevLongitude) {
+                            option.style.color = prevColor;
+                        } else if (latitude === nextLatitude && longitude === nextLongitude) {
+                            prevColor = prevColor == 'red' ? 'blue' : 'red';
+                            option.style.color = prevColor;
+                        } else {
+                            prevColor = '';
+                        }
+
+                        optgroup.appendChild(option);
+                    } else {
+                        var option = document.createElement('option');
+                        option.text = `${index + 1}. ${timestamp}`;
+                        option.value = index + 1;
+                        option.setAttribute('data-latitude', latitude);
+                        option.setAttribute('data-longitude', longitude);
+
+                        if (latitude === prevLatitude && longitude === prevLongitude) {
+                            option.style.color = prevColor;
+                        } else if (latitude === nextLatitude && longitude === nextLongitude) {
+                            prevColor = prevColor == 'red' ? 'blue' : 'red';
+                            option.style.color = prevColor;
+                        } else {
+                            prevColor = '';
+                        }
+
+                        select.appendChild(option);
+                    }
+                });
+            }
+
+            // 地圖點擊事件處理器，繪製測量線和標記
+            const mapClickHandler = (e) => {
+                var lat = e.latlng.lat;
+                var lng = e.latlng.lng;
+                measuringCoordinates.push([lat, lng]);
+                if (measuringCoordinates.length > 1) {
+                    L.polyline(measuringCoordinates, { color: 'black', weight: setting.lineWeight, dashArray: '50, 20' }).addTo(map);
+                    for (var i = 1; i < measuringCoordinates.length; i++) {
+                        var point1 = L.latLng(measuringCoordinates[i - 1][0], measuringCoordinates[i - 1][1]);
+                        var point2 = L.latLng(measuringCoordinates[i][0], measuringCoordinates[i][1]);
+                        var distance = point1.distanceTo(point2); // 單位為米
+                        var distanceInKm = distance / 1000; // 單位為公里
+                        var center = L.latLngBounds([point1, point2]).getCenter(); // 計算兩點的中心點
+                        L.marker(center, {
+                            icon: L.divIcon({
+                                className: 'custom-marker',
+                                html: `<div style="font-size: ${setting.markerFontSize}px;white-space: nowrap;">${distanceInKm.toFixed(2)}公里</div>`,
+                            })
+                        }).addTo(map);
+                    }
+                }
+            }
+
+            // 坐標變更事件處理器，根據選取的坐標繪製折線
+            var prevGroupName = '';
+            function coordinateChangeHandler(e) {
+                var selectedIndex = this.selectedIndex;
+                var options = this.options;
+                var selectedOptions = [];
+                var groupName = options[selectedIndex].parentNode.label;
+                if (prevGroupName !== groupName) {
+                    cleanMap();
+                }
+                for (var i = 0; i <= selectedIndex; i++) {
+                    if (groupName === options[i].parentNode.label) {
+                        selectedOptions.push(options[i]);
+                    }
+                }
+                polylineDraw(selectedOptions);
+            }
+
+            const cleanMap = () => {
+                map.eachLayer((layer) => {
+                    if (layer !== map && !(layer instanceof L.TileLayer)) {
+                        map.removeLayer(layer);
+                    }
+                });
+            };
+
+            // 繪製折線
+            const polylineDraw = (selectedOptions) => {
+                var coordinates = [];
+                var totalLatitude = 0;
+                var totalLongitude = 0;
+                var count = 0;
+                for (var i = 0; i < selectedOptions.length; i++) {
+                    var selectedOption = selectedOptions[i];
+                    var selectedTime = selectedOption.text;
+                    var selectedValue = selectedOption.value;
+                    var selectedLatitude = parseFloat(selectedOption.getAttribute('data-latitude'));
+                    var selectedLongitude = parseFloat(selectedOption.getAttribute('data-longitude'));
+                    totalLatitude += selectedLatitude;
+                    totalLongitude += selectedLongitude;
+                    count++;
+                    coordinates.push([selectedLatitude, selectedLongitude]);
+
+                    if (setting.drawMarker) {
+                        L.marker([selectedLatitude, selectedLongitude], {
+                            icon: L.divIcon({
+                                className: 'custom-marker',
+                                html: `<div style="font-size: ${setting.markerFontSize}px;">${selectedValue}</div>`,
+                            })
+                        }).addTo(map);
+                    }
+                }
+                if (count > 0) {
+                    var centerLatitude = totalLatitude / count;
+                    var centerLongitude = totalLongitude / count;
+                    map.panTo([centerLatitude, centerLongitude]);
+                }
+                L.polyline(coordinates, { color: setting.lineColor, weight: setting.lineWeight }).addTo(map);
+            }
+
+            // 繪製熱點圖
+            const heatDraw = (options) => {
+                var heatData = [];
+                var totalLatitude = 0;
+                var totalLongitude = 0;
+                var count = 0;
+                for (var i = 0; i < options.length; i++) {
+                    var selectedOption = options[i];
+                    var selectedTime = selectedOption.text;
+                    var selectedValue = selectedOption.value;
+                    var selectedLatitude = parseFloat(selectedOption.getAttribute('data-latitude'));
+                    var selectedLongitude = parseFloat(selectedOption.getAttribute('data-longitude'));
+                    totalLatitude += selectedLatitude;
+                    totalLongitude += selectedLongitude;
+                    count++;
+                    heatData.push([selectedLatitude, selectedLongitude]);
+                }
+                if (count > 0) {
+                    var centerLatitude = totalLatitude / count;
+                    var centerLongitude = totalLongitude / count;
+                    map.panTo([centerLatitude, centerLongitude]);
+                }
+                L.heatLayer(heatData).addTo(map);
+            }
 
             // 監聽地圖移動事件，更新中心點和縮放級別至 localStorage
             map.on('moveend', () => {
@@ -377,18 +594,21 @@
                         }
                         return result;
                     }, []);
-                    displayContents(data);
+                    fileInputData = data;
+
                 };
                 reader.readAsText(file, 'UTF-8');
+                document.getElementById('btnGroup').disabled = false;
+                document.getElementById('btnUngroup').disabled = false;
             });
+
+            document.getElementById('btnGroup').addEventListener('click', displayContents);
+
+            document.getElementById('btnUngroup').addEventListener('click', displayContents);
 
             // 監聽清除按鈕點擊事件，清除地圖上的圖層和測量坐標
             document.getElementById('btnClean').addEventListener('click', () => {
-                map.eachLayer((layer) => {
-                    if (layer !== map && !(layer instanceof L.TileLayer)) {
-                        map.removeLayer(layer);
-                    }
-                });
+                cleanMap();
                 measuringCoordinates = [];
             });
 
@@ -397,6 +617,18 @@
                 var select = document.getElementById('coordinate');
                 var selectedOptions = select.selectedOptions;
                 polylineDraw(selectedOptions);
+            });
+
+            // 監聽熱點圖按鈕點擊事件，根據選取的坐標繪製熱點圖
+            document.getElementById('btnHeat').addEventListener('click', () => {
+                var select = document.getElementById('coordinate');
+                var selectedOptions = select.selectedOptions;
+                if (selectedOptions.length === 0) {
+                    var options = select.options;
+                    heatDraw(options);
+                } else {
+                    heatDraw(selectedOptions);
+                }
             });
 
             // 監聽測量開關切換事件，開啟或關閉測量模式
@@ -417,108 +649,6 @@
                     document.getElementById('coordinate').removeEventListener('change', coordinateChangeHandler);
                 }
             });
-
-            // 顯示坐標內容
-            const displayContents = (data) => {
-                var select = document.getElementById('coordinate');
-                var optgroups = {};
-                var periods = setting.periods;
-
-                data.forEach((row, index) => {
-                    var timestamp = row[0];
-                    var latitude = row[1];
-                    var longitude = row[2];
-                    var time = new Date(timestamp).toLocaleTimeString('en-US', { hour12: false });
-
-                    var period = Object.keys(periods).find((key) => {
-                        var start = new Date('1970-01-01T' + periods[key].start);
-                        var end = new Date('1970-01-01T' + periods[key].end);
-                        var timestampDate = new Date('1970-01-01T' + time);
-                        return timestampDate >= start && timestampDate <= end;
-                    });
-
-                    if (!optgroups[period]) {
-                        optgroups[period] = document.createElement('optgroup');
-                        optgroups[period].label = period;
-                        select.add(optgroups[period]);
-                    }
-
-                    var option = document.createElement('option');
-                    option.text = `${index + 1}. ${timestamp}`;
-                    option.value = index + 1;
-                    option.setAttribute('data-latitude', latitude);
-                    option.setAttribute('data-longitude', longitude);
-                    optgroups[period].appendChild(option);
-                });
-            }
-
-            // 地圖點擊事件處理器，繪製測量線和標記
-            const mapClickHandler = (e) => {
-                var lat = e.latlng.lat;
-                var lng = e.latlng.lng;
-                measuringCoordinates.push([lat, lng]);
-                if (measuringCoordinates.length > 1) {
-                    L.polyline(measuringCoordinates, { color: 'black', weight: setting.lineWeight, dashArray: '50, 20' }).addTo(map);
-                    for (var i = 1; i < measuringCoordinates.length; i++) {
-                        var point1 = L.latLng(measuringCoordinates[i - 1][0], measuringCoordinates[i - 1][1]);
-                        var point2 = L.latLng(measuringCoordinates[i][0], measuringCoordinates[i][1]);
-                        var distance = point1.distanceTo(point2); // 單位為米
-                        var distanceInKm = distance / 1000; // 單位為公里
-                        var center = L.latLngBounds([point1, point2]).getCenter(); // 計算兩點的中心點
-                        L.marker(center, {
-                            icon: L.divIcon({
-                                className: 'custom-marker',
-                                html: `<div style="font-size: ${setting.markerFontSize}px;white-space: nowrap;">${distanceInKm.toFixed(2)}公里</div>`,
-                            })
-                        }).addTo(map);
-                    }
-                }
-            }
-
-            // 坐標變更事件處理器，根據選取的坐標繪製折線
-            function coordinateChangeHandler(e) {
-                var selectedIndex = this.selectedIndex;
-                var options = this.options;
-                var selectedOptions = [];
-                for (var i = 0; i <= selectedIndex; i++) {
-                    selectedOptions.push(options[i]);
-                }
-                polylineDraw(selectedOptions);
-            }
-
-            // 繪製折線
-            const polylineDraw = (selectedOptions) => {
-                var coordinates = [];
-                var totalLatitude = 0;
-                var totalLongitude = 0;
-                var count = 0;
-                for (var i = 0; i < selectedOptions.length; i++) {
-                    var selectedOption = selectedOptions[i];
-                    var selectedTime = selectedOption.text;
-                    var selectedValue = selectedOption.value;
-                    var selectedLatitude = parseFloat(selectedOption.getAttribute('data-latitude'));
-                    var selectedLongitude = parseFloat(selectedOption.getAttribute('data-longitude'));
-                    totalLatitude += selectedLatitude;
-                    totalLongitude += selectedLongitude;
-                    count++;
-                    coordinates.push([selectedLatitude, selectedLongitude]);
-
-                    if (setting.drawMarker) {
-                        L.marker([selectedLatitude, selectedLongitude], {
-                            icon: L.divIcon({
-                                className: 'custom-marker',
-                                html: `<div style="font-size: ${setting.markerFontSize}px;">${selectedValue}</div>`,
-                            })
-                        }).addTo(map);
-                    }
-                }
-                if (count > 0) {
-                    var centerLatitude = totalLatitude / count;
-                    var centerLongitude = totalLongitude / count;
-                    map.panTo([centerLatitude, centerLongitude]);
-                }
-                L.polyline(coordinates, { color: setting.lineColor, weight: setting.lineWeight }).addTo(map);
-            }
         })();
     </script>
 </body>
