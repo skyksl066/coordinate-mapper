@@ -520,14 +520,14 @@
                     totalLatitude += selectedLatitude;
                     totalLongitude += selectedLongitude;
                     count++;
-                    heatData.push([selectedLatitude, selectedLongitude]);
+                    heatData.push([selectedLatitude, selectedLongitude, 10]);
                 }
                 if (count > 0) {
                     var centerLatitude = totalLatitude / count;
                     var centerLongitude = totalLongitude / count;
                     map.panTo([centerLatitude, centerLongitude]);
                 }
-                L.heatLayer(heatData).addTo(map);
+                L.heatLayer(heatData, { radius: 25, blur: 15 }).addTo(map);
             }
 
             // 監聽地圖移動事件，更新中心點和縮放級別至 localStorage
