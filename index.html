@@ -19,6 +19,7 @@
 
         #coordinate {
             height: calc(100vh - 340px);
+            overflow: auto;
         }
 
         .custom-marker {
@@ -326,6 +327,35 @@
             var fileInputData = [];
             var map = L.map('map').setView(setting.center, setting.zoom); // 創建地圖並設置中心點和縮放級別
 
+            /**
+             * Adjusts a number to the specified digit.
+             *
+             * @param {"round" | "floor" | "ceil"} type The type of adjustment.
+             * @param {number} value The number.
+             * @param {number} exp The exponent (the 10 logarithm of the adjustment base).
+             * @returns {number} The adjusted value.
+             */
+            const decimalAdjust = (type, value, exp) => {
+                type = String(type);
+                if (!["round", "floor", "ceil"].includes(type)) {
+                    throw new TypeError(
+                        "The type of decimal adjustment must be one of 'round', 'floor', or 'ceil'.",
+                    );
+                }
+                exp = Number(exp);
+                value = Number(value);
+                if (exp % 1 !== 0 || Number.isNaN(value)) {
+                    return NaN;
+                } else if (exp === 0) {
+                    return Math[type](value);
+                }
+                const [magnitude, exponent = 0] = value.toString().split("e");
+                const adjustedValue = Math[type](`${magnitude}e${exponent - exp}`);
+                // Shift back
+                const [newMagnitude, newExponent = 0] = adjustedValue.toString().split("e");
+                return Number(`${newMagnitude}e${+newExponent + exp}`);
+            }
+
             // 顯示坐標內容
             function displayContents() {
                 var btn = this;
@@ -386,8 +416,9 @@
                         }
                         var groupIndex = optgroup.children.length + 1;
                         var option = document.createElement('option');
-                        option.text = `${groupIndex}. ${timestamp}`;
+                        option.text = `${groupIndex}. ${timestamp} (${decimalAdjust('floor', latitude, -3)}, ${decimalAdjust('floor', longitude, -3)})`;
                         option.value = groupIndex;
+                        option.setAttribute('data-time', timestamp);
                         option.setAttribute('data-latitude', latitude);
                         option.setAttribute('data-longitude', longitude);
 
@@ -403,8 +434,9 @@
                         optgroup.appendChild(option);
                     } else {
                         var option = document.createElement('option');
-                        option.text = `${index + 1}. ${timestamp}`;
+                        option.text = `${index + 1}. ${timestamp} (${decimalAdjust('floor', latitude, -3)}, ${decimalAdjust('floor', longitude, -3)})`;
                         option.value = index + 1;
+                        option.setAttribute('data-time', timestamp);
                         option.setAttribute('data-latitude', latitude);
                         option.setAttribute('data-longitude', longitude);
 
@@ -479,22 +511,46 @@
                 var count = 0;
                 for (var i = 0; i < selectedOptions.length; i++) {
                     var selectedOption = selectedOptions[i];
-                    var selectedTime = selectedOption.text;
+                    var selectedTime = selectedOption.getAttribute('data-time');
                     var selectedValue = selectedOption.value;
                     var selectedLatitude = parseFloat(selectedOption.getAttribute('data-latitude'));
                     var selectedLongitude = parseFloat(selectedOption.getAttribute('data-longitude'));
                     totalLatitude += selectedLatitude;
                     totalLongitude += selectedLongitude;
                     count++;
-                    coordinates.push([selectedLatitude, selectedLongitude]);
+                    var latlng = [selectedLatitude, selectedLongitude];
+                    var message = `Index: ${selectedValue}<br>Time: ${selectedTime}<br>Latitude: ${selectedLatitude}<br>Longitude: ${selectedLongitude}`;
+                    coordinates.push(latlng);
 
                     if (setting.drawMarker) {
-                        L.marker([selectedLatitude, selectedLongitude], {
-                            icon: L.divIcon({
-                                className: 'custom-marker',
-                                html: `<div style="font-size: ${setting.markerFontSize}px;">${selectedValue}</div>`,
-                            })
-                        }).addTo(map);
+                        // 使用 circleMarker 創建圓形標記，並將公里數加在圓形標記的中心
+                        var circleMarker = L.circleMarker(latlng, { radius: setting.lineWeight, color: setting.lineColor }).addTo(map);
+                        var divIcon = L.divIcon({
+                            className: 'custom-marker',
+                            html: `<div style="font-size: ${setting.markerFontSize}px;">${selectedValue}</div>`,
+                        });
+                        var marker = L.marker(latlng, { icon: divIcon }).addTo(map);
+                        var tooltip = L.tooltip({ permanent: true, className: 'custom-tooltip' }).setContent(message);
+                        // 監聽圓形標記的 hover 事件，顯示 Tooltip
+                        circleMarker.on('mouseover', function (e) {
+                            this.bindTooltip(tooltip).openTooltip();
+                        });
+                        marker.on('mouseover', function (e) {
+                            this.bindTooltip(tooltip).openTooltip();
+                        });
+
+                        // 監聽圓形標記的 mouseout 事件，隱藏 Tooltip
+                        circleMarker.on('mouseout', function (e) {
+                            this.closeTooltip();
+                        });
+                        marker.on('mouseout', function (e) {
+                            this.closeTooltip();
+                        });
+
+                        // 監聽圓形標記的 click 事件，顯示 Tooltip
+                        //circleMarker.on('click', function (e) {
+                        //    this.bindTooltip(tooltip).openTooltip();
+                        //});
                     }
                 }
                 if (count > 0) {
