@@ -148,16 +148,26 @@
                         <div class="row">
                             <div class="col-6">
                                 <div class="form-group">
+                                    <label for="markerFontSize" class="form-label">Marker font size</label>
+                                    <input type="number" class="form-control" id="markerFontSize" value="18">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="form-group">
                                     <label class="form-label" for="drawMarker">Draw marker</label>
                                     <div class="form-switch">
                                         <input class="form-check-input" type="checkbox" id="drawMarker" checked style="width: 5em; height:2em;">
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-6">
+                            <div class="col-4">
                                 <div class="form-group">
-                                    <label for="markerFontSize" class="form-label">Marker font size</label>
-                                    <input type="number" class="form-control" id="markerFontSize" value="18">
+                                    <label class="form-label" for="drawMarker">Draw circle</label>
+                                    <div class="form-switch">
+                                        <input class="form-check-input" type="checkbox" id="drawCircle" style="width: 5em; height:2em;">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -300,6 +310,7 @@
                     lineWeight: '3',
                     markerFontSize: '18',
                     drawMarker: true,
+                    drawCircle: false,
                     periods: {
                         periodOne: { start: '07:00', end: '17:59' },
                         periodTwo: { start: '18:00', end: '21:59' },
@@ -317,6 +328,7 @@
             var lineWeight = document.getElementById('lineWeight');
             var markerFontSize = document.getElementById('markerFontSize');
             var drawMarker = document.getElementById('drawMarker');
+            var drawCircle = document.getElementById('drawCircle');
             var periodOneStart = document.getElementById('periodOneStart');
             var periodOneEnd = document.getElementById('periodOneEnd');
             var periodTwoStart = document.getElementById('periodTwoStart');
@@ -552,6 +564,17 @@
                         //    this.bindTooltip(tooltip).openTooltip();
                         //});
                     }
+
+                    if (setting.drawCircle) {
+                        var circle = L.circle(latlng, {
+                            radius: 5500, // 半徑為 5.5 公里
+                            color: 'red', // 圓圈顏色
+                            weight: setting.lineWeight, // 圓圈粗細
+                            opacity: 0.5, // 圓圈透明度
+                            dashArray: '10, 10', // 虛線樣式
+                            fill: false // 不填滿內部
+                        }).addTo(map);
+                    }
                 }
                 if (count > 0) {
                     var centerLatitude = totalLatitude / count;
@@ -607,6 +630,7 @@
                 lineWeight.value = setting.lineWeight;
                 markerFontSize.value = setting.markerFontSize;
                 drawMarker.checked = setting.drawMarker;
+                drawCircle.checked = setting.drawCircle;
                 periodOneStart.value = setting.periods.periodOne.start;
                 periodOneEnd.value = setting.periods.periodOne.end;
                 periodTwoStart.value = setting.periods.periodTwo.start;
@@ -624,6 +648,7 @@
                     lineWeight: lineWeight.value,
                     markerFontSize: markerFontSize.value,
                     drawMarker: drawMarker.checked,
+                    drawCircle: drawCircle.checked,
                     periods: {
                         periodOne: { start: periodOneStart.value, end: periodOneEnd.value },
                         periodTwo: { start: periodTwoStart.value, end: periodTwoEnd.value },
