@@ -148,26 +148,32 @@
                         <div class="row">
                             <div class="col-6">
                                 <div class="form-group">
-                                    <label for="markerFontSize" class="form-label">Marker font size</label>
-                                    <input type="number" class="form-control" id="markerFontSize" value="18">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-4">
-                                <div class="form-group">
                                     <label class="form-label" for="drawMarker">Draw marker</label>
                                     <div class="form-switch">
                                         <input class="form-check-input" type="checkbox" id="drawMarker" checked style="width: 5em; height:2em;">
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-4">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="markerFontSize" class="form-label">Marker font size</label>
+                                    <input type="number" class="form-control" id="markerFontSize" value="18">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
                                 <div class="form-group">
                                     <label class="form-label" for="drawMarker">Draw circle</label>
                                     <div class="form-switch">
                                         <input class="form-check-input" type="checkbox" id="drawCircle" style="width: 5em; height:2em;">
                                     </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="circleRadius" class="form-label">Circle radius</label>
+                                    <input type="number" class="form-control" id="circleRadius" value="5.5" step="0.01">
                                 </div>
                             </div>
                         </div>
@@ -309,6 +315,7 @@
                     lineColor: '#3388ff',
                     lineWeight: '3',
                     markerFontSize: '18',
+                    circleRadius: 5.5,
                     drawMarker: true,
                     drawCircle: false,
                     periods: {
@@ -327,6 +334,7 @@
             var lineColor = document.getElementById('lineColorPicker');
             var lineWeight = document.getElementById('lineWeight');
             var markerFontSize = document.getElementById('markerFontSize');
+            var circleRadius = document.getElementById('circleRadius');
             var drawMarker = document.getElementById('drawMarker');
             var drawCircle = document.getElementById('drawCircle');
             var periodOneStart = document.getElementById('periodOneStart');
@@ -567,7 +575,7 @@
 
                     if (setting.drawCircle) {
                         var circle = L.circle(latlng, {
-                            radius: 5500, // 半徑為 5.5 公里
+                            radius: Number(setting.circleRadius) * 1000, // 半徑
                             color: 'red', // 圓圈顏色
                             weight: setting.lineWeight, // 圓圈粗細
                             opacity: 0.5, // 圓圈透明度
@@ -629,6 +637,7 @@
                 lineColor.value = setting.lineColor;
                 lineWeight.value = setting.lineWeight;
                 markerFontSize.value = setting.markerFontSize;
+                circleRadius.value = setting.circleRadius;
                 drawMarker.checked = setting.drawMarker;
                 drawCircle.checked = setting.drawCircle;
                 periodOneStart.value = setting.periods.periodOne.start;
@@ -647,6 +656,7 @@
                     lineColor: lineColor.value,
                     lineWeight: lineWeight.value,
                     markerFontSize: markerFontSize.value,
+                    circleRadius: circleRadius.value,
                     drawMarker: drawMarker.checked,
                     drawCircle: drawCircle.checked,
                     periods: {
